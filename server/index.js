@@ -16,14 +16,17 @@ async function callOpenAI(text) {
       model: "gpt-4.1-mini",
       input: `
 Extract food ingredients and estimated grams.
+Also estimate total calories and total protein.
 
 Return ONLY valid JSON in this format:
 {
+  "dishName": "",
   "ingredients": [
     { "name": "", "grams": 0 }
-  ]
+  ],
+  "totalCalories": 0,
+  "totalProtein": 0
 }
-
 Meal: ${text}
 `
     },

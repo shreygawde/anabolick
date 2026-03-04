@@ -4,6 +4,10 @@ import { useLocation } from "react-router-dom";
 export default function MacroTracker() {
   const location = useLocation();
 /* -------------------- STATE -------------------- */
+  const [aiInput, setAiInput] = useState("");
+const [aiLoading, setAiLoading] = useState(false);
+const [aiResult, setAiResult] = useState(null);
+
   const [targets, setTargets] = useState({
     calories: "",
     protein: "",
@@ -73,6 +77,44 @@ export default function MacroTracker() {
       : 0;
 
   /* -------------------- HANDLERS -------------------- */
+  const analyzeWithAI = async () => {
+  if (!aiInput.trim()) return;
+
+  try {
+    setAiLoading(true);
+
+    const response = await fetch("http://localhost:5000/analyze-text", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text: aiInput }),
+    });
+
+    const data = await response.json();
+
+    console.log("AI response:", data);
+
+    setAiResult(data);
+  if (data.totalCalories && data.totalProtein) {
+  setEntries((prev) => [
+    ...prev,
+    {
+      name: data.dishName || aiInput,
+      calories: Number(data.totalCalories),
+      protein: Number(data.totalProtein)
+    }
+  ]);
+
+  setAiInput("");
+}
+  } catch (error) {
+    console.error("AI request failed:", error);
+  } finally {
+    setAiLoading(false);
+  }
+};
+
   const handleTargetChange = (e) => {
     const { name, value } = e.target;
     setTargets((t) => ({ ...t, [name]: value }));
@@ -190,6 +232,57 @@ export default function MacroTracker() {
 
          
         </section>
+{/* AI INPUT */}
+<section className="p-6 rounded-xl border bg-white/70 mb-6">
+  <h2 className="text-xl font-semibold mb-4">AI Meal Analyzer</h2>
+
+  <textarea
+    value={aiInput}
+    onChange={(e) => setAiInput(e.target.value)}
+    placeholder="Describe your meal... e.g. I ate chicken curry and rice"
+    className="w-full rounded-lg border px-3 py-2"
+  />
+
+  <button
+    onClick={analyzeWithAI}
+    disabled={aiLoading}
+    className="mt-4 rounded-full bg-accent text-white px-6 py-2 font-medium hover:bg-accent/50"
+  >
+    {aiLoading ? "Analyzing..." : "Analyze with AI"}
+  </button>
+
+  {aiResult && (
+  <div className="mt-6 space-y-4">
+
+    {/* Clean Display */}
+    <div className="p-4 rounded-lg border bg-white">
+      <h3 className="font-semibold text-lg mb-2">
+        {aiResult.dishName}
+      </h3>
+
+      <p className="text-sm text-secondary mb-3">
+        {aiResult.totalCalories} kcal · {aiResult.totalProtein}g protein
+      </p>
+
+      <ul className="text-sm space-y-1">
+        {aiResult.ingredients?.map((ing, index) => (
+          <li key={index} className="flex justify-between">
+            <span>{ing.name}</span>
+            <span className="text-secondary">{ing.grams}g</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+
+    {/* Raw JSON Debug */}
+    <pre className="bg-black/5 p-4 rounded text-xs overflow-x-auto">
+      {JSON.stringify(aiResult, null, 2)}
+    </pre>
+
+  </div>
+)}
+
+</section>
 
         {/* LOG ENTRY */}
         {/* LOG ENTRY */}
