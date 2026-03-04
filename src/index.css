@@ -1,0 +1,24 @@
+@import "tailwindcss";
+
+
+@theme {
+  /* Surfaces */
+  --color-base: #f7f6f2;
+  --color-elevated: #ffffff;
+
+  /* Text */
+  --color-primary: #121212;
+  --color-secondary: #6b7280;
+
+  /* Accents */
+  --color-accent: #72E346; /* performance green */
+  --color-flesh: #c43c3c;  /* flesh red */
+
+  /* Borders */
+  --color-border: #e5e7eb;
+}
+
+/* Global base styles */
+html, body {
+  background-color: #f7f6f2;
+}
