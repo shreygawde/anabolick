@@ -76,7 +76,7 @@ function TrackerStep({ step }) {
       </div>
 
       {/* Right: Visual placeholder */}
-      <div className="h-64 rounded-2xl bg-elevated flex items-center justify-center text-muted">
+      <div className="h-64 rounded-2xl bg-elevated flex items-center justify-center text-secondary">
         Step {step + 1} visual
       </div>
     </div>

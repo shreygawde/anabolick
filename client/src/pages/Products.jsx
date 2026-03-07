@@ -1,4 +1,4 @@
-import Card from "../components/Card.jsx";
+import MacroCard from "../components/MacroCard.jsx";
 import { products } from "../arrays/products.js";
 export default function Products() {
         return(
@@ -8,7 +8,7 @@ export default function Products() {
         <p className="text-primary"> Honest scores based on ingredients, quality, and value.</p>
         <div  className="grid grid-cols-1 md:grid-cols-3 gap-11 max-w-5xl mx-auto ">
                 {products.map((r)=>(
-               <Card key={r.no} {...r}/> 
+               <MacroCard key={r.no} {...r}/> 
               
               
             ))}

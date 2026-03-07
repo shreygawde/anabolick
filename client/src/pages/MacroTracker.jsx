@@ -1,6 +1,14 @@
 import { useState,useEffect } from "react";
 import { useLocation } from "react-router-dom";
-
+import Summary from "@/components/MacroTracker/summary.jsx"
+import AiMealAnalyzer from "@/components/MacroTracker/AiMealAnalyzer.jsx"
+import MealList from "@/components/MacroTracker/MealList.jsx"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { Button } from "@/components/ui/button"
+import { Textarea } from "@/components/ui/textarea"
+import { Input } from "@/components/ui/input"
+//import MacroProgress from "@/components/MacroTracker/MacroProgress.jsx"
 export default function MacroTracker() {
   const location = useLocation();
 /* -------------------- STATE -------------------- */
@@ -169,301 +177,53 @@ const [aiResult, setAiResult] = useState(null);
           : e
       )
     );
-
-
-
     setEditingIndex(null);
     setEditDraft({ name: "", calories: "", protein: "" });
   };
+return (
+<section className="px-6 py-20">
+<div className="max-w-6xl mx-auto space-y-8">
+<h1 className="text-3xl font-bold">
+Macro Dashboard
+</h1>
+<Summary totalCalories={totalCalories}
+totalProtein={totalProtein}
+entries={entries}
+targets={targets}/>
+<div className="grid md:grid-cols-2 gap-6">
+<AiMealAnalyzer
+  aiInput={aiInput}
+  setAiInput={setAiInput}
+  analyzeWithAI={analyzeWithAI}
+  aiLoading={aiLoading}
+  aiResult={aiResult}
+/>
+<MealList targets={targets}
+entries={entries}/>
+</div>
+<section>
+  <Card>
+<CardHeader>
+<CardTitle>Daily Progress</CardTitle>
+</CardHeader>
 
+<CardContent className="space-y-4">
 
-
-
-
-
-
-  return (
- 
-    <section className=" relative px-6 py-24">
-      <div className="max-w-5xl mx-auto space-y-16">
-
-        {/* HEADER */}
-        <header>
-          <h1 className="text-3xl font-bold mb-2">Macro Tracker</h1>
-          <p className="text-secondary">
-            Track what matters. Nothing extra.
-          </p>
-        </header>
-
-        {/* DAILY TARGETS */}
-        <section className="p-6 rounded-xl border bg-white/70">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Calories
-              </label>
-              <input
-                type="number"
-                name="calories"
-                value={targets.calories}
-                onChange={handleTargetChange}
-                placeholder="e.g. 2200"
-                className="w-full rounded-lg border px-3 py-2"
-              />
-               </div>
-
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Protein (g)
-              </label>
-              <input
-                type="number"
-                name="protein"
-                value={targets.protein}
-                onChange={handleTargetChange}
-                placeholder="e.g. 160"
-                className="w-full rounded-lg border px-3 py-2"
-              />
-            </div>
-          </div>
-            <p className="text-sm text-secondary mt-3">
-            Not sure? Most lifters aim for <strong>2–2.2g protein/kg</strong> bodyweight.
-          </p>
-
-         
-        </section>
-{/* AI INPUT */}
-<section className="p-6 rounded-xl border bg-white/70 mb-6">
-  <h2 className="text-xl font-semibold mb-4">AI Meal Analyzer</h2>
-
-  <textarea
-    value={aiInput}
-    onChange={(e) => setAiInput(e.target.value)}
-    placeholder="Describe your meal... e.g. I ate chicken curry and rice"
-    className="w-full rounded-lg border px-3 py-2"
-  />
-
-  <button
-    onClick={analyzeWithAI}
-    disabled={aiLoading}
-    className="mt-4 rounded-full bg-accent text-white px-6 py-2 font-medium hover:bg-accent/50"
-  >
-    {aiLoading ? "Analyzing..." : "Analyze with AI"}
-  </button>
-
-  {aiResult && (
-  <div className="mt-6 space-y-4">
-
-    {/* Clean Display */}
-    <div className="p-4 rounded-lg border bg-white">
-      <h3 className="font-semibold text-lg mb-2">
-        {aiResult.dishName}
-      </h3>
-
-      <p className="text-sm text-secondary mb-3">
-        {aiResult.totalCalories} kcal · {aiResult.totalProtein}g protein
-      </p>
-
-      <ul className="text-sm space-y-1">
-        {aiResult.ingredients?.map((ing, index) => (
-          <li key={index} className="flex justify-between">
-            <span>{ing.name}</span>
-            <span className="text-secondary">{ing.grams}g</span>
-          </li>
-        ))}
-      </ul>
-    </div>
-
-    {/* Raw JSON Debug */}
-    <pre className="bg-black/5 p-4 rounded text-xs overflow-x-auto">
-      {JSON.stringify(aiResult, null, 2)}
-    </pre>
-
-  </div>
-)}
-
-</section>
-
-        {/* LOG ENTRY */}
-        {/* LOG ENTRY */}
-<section className="p-6 rounded-xl border bg-white/70">
-  <h2 className="text-xl font-semibold mb-4">Log Food</h2>
-
-  <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
-    <input
-      type="text"
-      name="name"
-      value={entry.name}
-      onChange={handleEntryChange}
-      placeholder="Food name"
-      className="rounded-lg border px-3 py-2 sm:col-span-2"
-    />
-
-    <input
-      type="number"
-      name="calories"
-      value={entry.calories}
-      onChange={handleEntryChange}
-      placeholder="kcal"
-      className="rounded-lg border px-3 py-2"
-    />
-
-    <input
-      type="number"
-      name="protein"
-      value={entry.protein}
-      onChange={handleEntryChange}
-      placeholder="protein (g)"
-      className="rounded-lg border px-3 py-2"
-    />
-  </div>
-
-  <button
-     type="button" onClick={addEntry}
-    className="mt-4 rounded-full bg-accent text-white px-6 py-2 font-medium cursor-pointer hover:bg-accent/50"
-  >
-    Add entry
-  </button>
-
-  {/* ENTRY LIST */}
-  {entries.length > 0 && (
-    <ul className="mt-6 space-y-2">
-      {entries.map((e, i) => (
-        <li
-          key={i}
-          className="flex flex-col gap-2 rounded-lg bg-white px-4 py-2 border"
-        >
-          
-    
-  {editingIndex === i ? (
-  <div className="flex gap-2 w-full">
-    <input
-      name="name"
-      value={editDraft.name}
-      onChange={(e) =>
-        setEditDraft((d) => ({ ...d, name: e.target.value }))
-      }
-      className="border rounded px-2 py-1 flex-1"
-    />
-    <input
-      type="number"
-      name="calories"
-      value={editDraft.calories}
-      onChange={(e) =>
-        setEditDraft((d) => ({ ...d, calories: e.target.value }))
-      }
-      className="border rounded px-2 py-1 w-24"
-    />
-    <input
-      type="number"
-      name="protein"
-      value={editDraft.protein}
-      onChange={(e) =>
-        setEditDraft((d) => ({ ...d, protein: e.target.value }))
-      }
-      className="border rounded px-2 py-1 w-24"
-    />
-
-    <button
-      type="button"
-      onClick={saveEdit}
-      className="text-sm text-accent"
-    >
-      Save
-    </button>
-   <button type="button" onClick={() => setEditingIndex(null)} className="text-secondary text-sm">Cancel</button>
-  </div>
-) : (
-  <>
-    <div>
-      <p className="font-medium">{e.name}</p>
-      <p className="text-sm text-secondary">
-        {e.calories} kcal · {e.protein}g protein
-      </p>
-    </div>
-
-    <div className="flex gap-3">
-      <button
-        type="button"
-        onClick={() => startEdit(i)}
-        className="text-sm text-secondary hover:text-black"
-      >
-        Edit
-      </button>
-      <button
-        type="button"
-        onClick={() => deleteEntry(i)}
-        className="text-sm text-secondary hover:text-red-500"
-      >
-        Delete
-      </button>
-    </div>
-  </>
-)}
-
-        </li>
-        
-      ))}
-    </ul>
-  )}
-</section>
-
-
-        {/* SUMMARY */}
-        <section className="p-6 rounded-xl border bg-white/70">
-  <h2 className="text-xl font-semibold mb-4">Today’s Summary</h2>
-
-  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    <div className="rounded-lg border p-4 bg-white">
-  <p className="text-sm text-secondary mb-1">Calories</p>
-
-  <p className="text-2xl font-bold mb-2">
-    {totalCalories}
-    {targets.calories && (
-      <span className="text-base text-secondary">
-        {" "} / {targets.calories}
-      </span>
-    )}
-  </p>
-
-  {targets.calories && (
-    <div className="h-2 w-full rounded-full bg-black/10 overflow-hidden">
-      <div
-        className="h-full bg-accent"
-        style={{ width: `${calorieProgress}%` }}
-      />
-    </div>
-  )}
+<div>
+<p className="text-sm mb-1">Calories</p>
+<Progress value={calorieProgress} />
 </div>
 
-
-    <div className="rounded-lg border p-4 bg-white">
-  <p className="text-sm text-secondary mb-1">Protein</p>
-
-  <p className="text-2xl font-bold mb-2">
-    {totalProtein}g
-    {targets.protein && (
-      <span className="text-base text-secondary">
-        {" "} / {targets.protein}g
-      </span>
-    )}
-  </p>
-
-  {targets.protein && (
-    <div className="h-2 w-full rounded-full bg-black/10 overflow-hidden">
-      <div
-        className="h-full bg-accent"
-        style={{ width: `${proteinProgress}%` }}
-      />
-    </div>
-  )}
+<div>
+<p className="text-sm mb-1">Protein</p>
+<Progress value={proteinProgress} />
 </div>
 
-  </div>
-  <button type="button" className="mt-4 rounded-full bg-accent text-white px-6 py-2 font-medium cursor-pointer hover:bg-accent/50" onClick={clearDay} >Clear</button>
+</CardContent>
+</Card>
 </section>
-
-      </div>
-    </section>
-  );
+</div>
+</section>
+);
 }
+

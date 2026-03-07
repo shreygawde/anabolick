@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import Card from "../Card.jsx";
+import MacroCard from "../MacroCard.jsx";
 import { products } from "../../arrays/products.js";
 export default function Products()
 {
@@ -89,7 +89,7 @@ export default function Products()
                   : "opacity-100"
               }`}
             >
-              <Card {...p} />
+              <MacroCard {...p} />
             </div>
           ))}
         </div>
