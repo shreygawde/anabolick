@@ -3,7 +3,7 @@ import { Progress } from "@/components/ui/progress"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
-export default function MealList({targets,entries})
+export default function MealList({targets,entries,deleteEntry})
 {
     return(
     <Card>

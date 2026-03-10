@@ -74,15 +74,17 @@ const [aiResult, setAiResult] = useState(null);
     0
   );
 
-  const calorieProgress =
-    targets.calories
-      ? Math.min((totalCalories / targets.calories) * 100, 100)
-      : 0;
+ const calorieTarget = Number(targets.calories) || 0;
+const proteinTarget = Number(targets.protein) || 0;
 
-  const proteinProgress =
-    targets.protein
-      ? Math.min((totalProtein / targets.protein) * 100, 100)
-      : 0;
+const calorieProgress = calorieTarget
+  ? Math.min((totalCalories / calorieTarget) * 100, 100)
+  : 0;
+
+const proteinProgress = proteinTarget
+  ? Math.min((totalProtein / proteinTarget) * 100, 100)
+  : 0;
+  console.log(targets)
 
   /* -------------------- HANDLERS -------------------- */
   const analyzeWithAI = async () => {
@@ -190,6 +192,39 @@ Macro Dashboard
 totalProtein={totalProtein}
 entries={entries}
 targets={targets}/>
+<Card>
+  <CardHeader>
+    <CardTitle>Daily Targets</CardTitle>
+  </CardHeader>
+
+  <CardContent className="space-y-4">
+
+    <div>
+      <p className="text-sm mb-1">Calories Target</p>
+      <Input
+        type="number"
+        name="calories"
+        value={targets.calories}
+        onChange={handleTargetChange}
+        placeholder="2000"
+        className="text-primary"
+      />
+    </div>
+
+    <div>
+      <p className="text-sm mb-1">Protein Target</p>
+      <Input
+        type="number"
+        name="protein"
+        value={targets.protein}
+        onChange={handleTargetChange}
+        placeholder="150"
+        className="text-primary"
+      />
+    </div>
+
+  </CardContent>
+</Card>
 <div className="grid md:grid-cols-2 gap-6">
 <AiMealAnalyzer
   aiInput={aiInput}
@@ -199,7 +234,8 @@ targets={targets}/>
   aiResult={aiResult}
 />
 <MealList targets={targets}
-entries={entries}/>
+entries={entries}
+deleteEntry={deleteEntry}/>
 </div>
 <section>
   <Card>
