@@ -39,8 +39,12 @@ async function searchFood(query) {
       }
     }
   );
+ const foods = response.data.foods.food;
 
-  return response.data;
+  return foods.slice(0, 5).map(food => ({
+    id: food.food_id,
+    name: food.food_name
+  }));
 }
 
 module.exports = { getAccessToken, searchFood };
