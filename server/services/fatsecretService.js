@@ -39,12 +39,28 @@ async function searchFood(query) {
       }
     }
   );
- const foods = response.data.foods.food;
 
-  return foods.slice(0, 5).map(food => ({
-    id: food.food_id,
-    name: food.food_name
-  }));
+const foodsRaw = response.data?.foods?.food;
+
+if (!foodsRaw) {
+  return [];
+}
+
+const foods = Array.isArray(foodsRaw) ? foodsRaw : [foodsRaw];
+
+// Prefer generic foods
+let candidates = foods.filter(food => food.food_type === "Generic");
+
+// If none exist, fall back to brand foods
+if (candidates.length === 0) {
+  candidates = foods;
+}
+
+return candidates.slice(0, 5).map(food => ({
+  id: food.food_id,
+  name: food.food_name,
+  brand: food.brand_name || null
+}));
 }
 
 module.exports = { getAccessToken, searchFood };
