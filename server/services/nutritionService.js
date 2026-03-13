@@ -2,26 +2,49 @@ async function analyzeMeal(text) {
 
   const parsed = await callOpenAI(text);
 
-  const ingredients = [];
+  const ingredientTasks = parsed.ingredients.map(async (ingredient) => {
 
-  for (const ingredient of parsed.ingredients) {
+    try {
 
-    const candidates = await searchFood(ingredient.name);
+      const candidates = await searchFood(ingredient.name);
 
-    const selectedFood = await chooseBestFood(
-      ingredient.name,
-      candidates
-    );
+      if (!candidates.length) {
+        console.warn(`No candidates for ${ingredient.name}`);
+        return null;
+      }
 
-    const nutrition = await getFoodDetails(selectedFood.id);
+      const selectedFood = await chooseBestFood(
+        ingredient.name,
+        candidates
+      );
 
-    const normalized = normalizeNutrition(
-      nutrition,
-      ingredient.grams
-    );
+      const nutrition = await getFoodDetails(selectedFood.id);
 
-    ingredients.push(normalized);
-  }
+      const normalized = normalizeNutrition(
+        nutrition,
+        ingredient.amount,
+        ingredient.unit
+      );
+
+      return {
+        name: ingredient.name,
+        amount: ingredient.amount,
+        unit: ingredient.unit,
+        ...normalized
+      };
+
+    } catch (err) {
+
+      console.error(`Ingredient failed: ${ingredient.name}`, err.message);
+      return null;
+
+    }
+
+  });
+
+  const ingredientResults = await Promise.all(ingredientTasks);
+
+  const ingredients = ingredientResults.filter(Boolean);
 
   const totals = calculateTotals(ingredients);
 

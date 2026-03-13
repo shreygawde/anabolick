@@ -6,7 +6,10 @@ async function chooseBestFood(ingredient, candidates) {
     throw new Error("No candidates provided for ranking");
   }
 
-  const options = candidates
+  const MAX_OPTIONS = 5;
+  const limitedCandidates = candidates.slice(0, MAX_OPTIONS);
+
+  const options = limitedCandidates
     .map((c, i) => {
       const label = c.brand ? `${c.brand} ${c.name}` : c.name;
       return `${i + 1}. ${label}`;
@@ -14,12 +17,18 @@ async function chooseBestFood(ingredient, candidates) {
     .join("\n");
 
   const prompt = `
+You are selecting the best database match for a food ingredient.
+
 Ingredient: ${ingredient}
 
 Options:
 ${options}
 
-Return ONLY the number of the best match.
+Rules:
+- Choose the option that best represents the ingredient.
+- Prefer the base ingredient (e.g., "egg" instead of "egg white").
+- Prefer generic foods over branded foods when possible.
+- Return ONLY the option number.
 `;
 
   const response = await axios.post(
@@ -32,7 +41,8 @@ Return ONLY the number of the best match.
       headers: {
         Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
         "Content-Type": "application/json"
-      }
+      },
+      timeout: 10000
     }
   );
 
@@ -42,13 +52,14 @@ Return ONLY the number of the best match.
     throw new Error("OpenAI returned an empty response");
   }
 
-  const index = parseInt(raw.match(/\d+/)?.[0], 10);
+  const match = raw.match(/\d+/);
+  const index = match ? parseInt(match[0], 10) : null;
 
-  if (!index || index < 1 || index > candidates.length) {
+  if (!index || index < 1 || index > limitedCandidates.length) {
     throw new Error("Invalid ranking response from AI");
   }
 
-  return candidates[index - 1];
+  return limitedCandidates[index - 1];
 }
 
 module.exports = chooseBestFood;
