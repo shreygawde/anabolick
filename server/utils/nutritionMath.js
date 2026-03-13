@@ -7,8 +7,21 @@ function normalizeNutrition(nutrition, amount, unit) {
     throw new Error(`Unsupported serving unit: ${servingUnit}`);
   }
 
+  let adjustedAmount = amount;
+
+  // Allow g ↔ ml interchange (common for liquids like milk)
   if (servingUnit !== unit) {
-    throw new Error(`Unit mismatch: ingredient ${unit} vs food ${servingUnit}`);
+
+    if (
+      (servingUnit === "g" && unit === "ml") ||
+      (servingUnit === "ml" && unit === "g")
+    ) {
+      // treat them as equivalent
+      adjustedAmount = amount;
+    } else {
+      throw new Error(`Unit mismatch: ingredient ${unit} vs food ${servingUnit}`);
+    }
+
   }
 
   const caloriesPerUnit = parseFloat(nutrition.calories) / servingAmount;
@@ -17,12 +30,13 @@ function normalizeNutrition(nutrition, amount, unit) {
   const fatPerUnit = parseFloat(nutrition.fat) / servingAmount;
 
   return {
-    calories: caloriesPerUnit * amount,
-    protein: proteinPerUnit * amount,
-    carbs: carbsPerUnit * amount,
-    fat: fatPerUnit * amount
+    calories: caloriesPerUnit * adjustedAmount,
+    protein: proteinPerUnit * adjustedAmount,
+    carbs: carbsPerUnit * adjustedAmount,
+    fat: fatPerUnit * adjustedAmount
   };
 }
+
 function calculateTotals(ingredients) {
 
   return ingredients.reduce(
@@ -41,6 +55,7 @@ function calculateTotals(ingredients) {
     }
   );
 }
+
 module.exports = {
   normalizeNutrition,
   calculateTotals
