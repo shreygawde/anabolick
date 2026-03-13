@@ -54,3 +54,4 @@ async function analyzeMeal(text) {
     totals
   };
 }
+module.exports = analyzeMeal;
