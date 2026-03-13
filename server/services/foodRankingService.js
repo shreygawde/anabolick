@@ -1,7 +1,7 @@
 const axios = require("axios");
 
 async function chooseBestFood(ingredient, candidates) {
-
+console.log("Ranking service OPENAI KEY:", process.env.OPENAI_API_KEY?.slice(0,10));
   if (!candidates || candidates.length === 0) {
     throw new Error("No candidates provided for ranking");
   }
