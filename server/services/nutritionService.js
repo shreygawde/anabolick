@@ -1,3 +1,7 @@
+const callOpenAI = require("./openaiService");
+const { searchFood, getFoodDetails } = require("./fatsecretService");
+const chooseBestFood = require("./foodRankingService");
+const { normalizeNutrition, calculateTotals } = require("../utils/nutritionMath");
 async function analyzeMeal(text) {
 
   const parsed = await callOpenAI(text);
