@@ -1,10 +1,11 @@
 const express = require("express");
 const router = express.Router();
 
-const callOpenAI = require("../services/openaiService");
+const analyzeMeal = require("../services/nutritionService");
 
 router.post("/", async (req, res) => {
   try {
+
     const userText = req.body.text;
 
     if (!userText || typeof userText !== "string") {
@@ -13,11 +14,12 @@ router.post("/", async (req, res) => {
       });
     }
 
-    const aiResult = await callOpenAI(userText);
+    const result = await analyzeMeal(userText);
 
-    res.json(aiResult);
+    res.json(result);
 
   } catch (err) {
+
     console.error(err.response?.data || err.message);
 
     const status = err.response?.status || 500;
@@ -25,6 +27,7 @@ router.post("/", async (req, res) => {
     res.status(status).json({
       error: err.response?.data?.error?.message || err.message || "Server error"
     });
+
   }
 });
 
