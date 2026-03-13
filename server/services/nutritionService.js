@@ -2,53 +2,93 @@ const callOpenAI = require("./openaiService");
 const { searchFood, getFoodDetails } = require("./fatsecretService");
 const chooseBestFood = require("./foodRankingService");
 const { normalizeNutrition, calculateTotals } = require("../utils/nutritionMath");
+
 async function analyzeMeal(text) {
 
   const parsed = await callOpenAI(text);
 
-  const ingredientTasks = parsed.ingredients.map(async (ingredient) => {
+  if (!parsed.ingredients || parsed.ingredients.length === 0) {
+    throw new Error("No food items detected");
+  }
+if (parsed.ingredients.length > 12) {
+  throw new Error("Meal too complex");
+}
+  /*
+  -------------------------
+  PHASE 1: FatSecret search
+  -------------------------
+  */
 
-    try {
+  const candidateLists = await Promise.all(
+    parsed.ingredients.map(i => searchFood(i.name))
+  );
 
-      const candidates = await searchFood(ingredient.name);
+  /*
+  -------------------------
+  PHASE 2: AI ranking
+  -------------------------
+  */
 
-      if (!candidates.length) {
+  const selectedFoods = await Promise.all(
+    parsed.ingredients.map((ingredient, idx) => {
+
+      const candidates = candidateLists[idx];
+
+      if (!candidates || candidates.length === 0) {
         console.warn(`No candidates for ${ingredient.name}`);
         return null;
       }
 
-      const selectedFood = await chooseBestFood(
+      return chooseBestFood(
         ingredient.name,
         candidates
       );
 
-      const nutrition = await getFoodDetails(selectedFood.id);
+    })
+  );
 
-      const normalized = normalizeNutrition(
-        nutrition,
-        ingredient.amount,
-        ingredient.unit
-      );
+  /*
+  -------------------------
+  PHASE 3: Nutrition lookup
+  -------------------------
+  */
 
-      return {
-        name: ingredient.name,
-        amount: ingredient.amount,
-        unit: ingredient.unit,
-        ...normalized
-      };
+  const nutritions = await Promise.all(
+    selectedFoods.map(food => {
 
-    } catch (err) {
+      if (!food) return null;
 
-      console.error(`Ingredient failed: ${ingredient.name}`, err.message);
-      return null;
+      return getFoodDetails(food.id);
 
-    }
+    })
+  );
 
-  });
+  /*
+  -------------------------
+  PHASE 4: Normalize values
+  -------------------------
+  */
 
-  const ingredientResults = await Promise.all(ingredientTasks);
+  const ingredients = parsed.ingredients.map((ingredient, idx) => {
 
-  const ingredients = ingredientResults.filter(Boolean);
+    const nutrition = nutritions[idx];
+
+    if (!nutrition) return null;
+
+    const normalized = normalizeNutrition(
+      nutrition,
+      ingredient.amount,
+      ingredient.unit
+    );
+
+    return {
+      name: ingredient.name,
+      amount: ingredient.amount,
+      unit: ingredient.unit,
+      ...normalized
+    };
+
+  }).filter(Boolean);
 
   const totals = calculateTotals(ingredients);
 
@@ -58,4 +98,5 @@ async function analyzeMeal(text) {
     totals
   };
 }
+
 module.exports = analyzeMeal;
