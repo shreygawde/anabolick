@@ -93,7 +93,7 @@ const proteinProgress = proteinTarget
   try {
     setAiLoading(true);
 
-    const response = await fetch("/api/analyze-text", {
+    const response = await fetch("/analyze-text", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
