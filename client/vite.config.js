@@ -8,9 +8,20 @@ export default defineConfig({
     react(),
     tailwindcss(),
   ],
+
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
   },
+
+  server: {
+    proxy: {
+      "/analyze-text": {
+        target: "http://localhost:5000",
+        changeOrigin: true
+      }
+    }
+  }
+
 });

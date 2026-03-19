@@ -1,3 +1,4 @@
+const supabase = require("../supabaseClient")
 const callOpenAI = require("./openaiService");
 const { searchFood, getFoodDetails } = require("./fatsecretService");
 const chooseBestFood = require("./foodRankingService");
@@ -91,6 +92,15 @@ if (parsed.ingredients.length > 12) {
   }).filter(Boolean);
 
   const totals = calculateTotals(ingredients);
+  await supabase
+  .from("meals")
+  .insert({
+    dish_name: parsed.dishName,
+    calories: totals.calories,
+    protein: totals.protein,
+    carbs: totals.carbs,
+    fat: totals.fat
+  })
 
   return {
     dishName: parsed.dishName,

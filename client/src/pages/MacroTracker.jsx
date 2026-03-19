@@ -9,8 +9,18 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Input } from "@/components/ui/input"
 import { Car } from "lucide-react";
+import WeeklyStrip from "@/components/MacroTracker/WeeklyStrip.jsx"
 //import MacroProgress from "@/components/MacroTracker/MacroProgress.jsx"
 export default function MacroTracker() {
+  const weekData = [
+  { day: "Mon", status: "under" },
+  { day: "Tue", status: "under" },
+  { day: "Wed", status: "near" },
+  { day: "Thu", status: "over" },
+  { day: "Fri", status: null },
+  { day: "Sat", status: null },
+  { day: "Sun", status: null },
+]
   const location = useLocation();
 /* -------------------- STATE -------------------- */
   const [aiInput, setAiInput] = useState("");
@@ -92,6 +102,7 @@ const proteinProgress = proteinTarget
 
   try {
     setAiLoading(true);
+    console.log("AI input:", aiInput);
 
     const response = await fetch("/analyze-text", {
       method: "POST",
@@ -101,22 +112,26 @@ const proteinProgress = proteinTarget
       body: JSON.stringify({ text: aiInput }),
     });
 
-    const data = await response.json();
+    if (!response.ok) {
+  const err = await response.json()
+  console.error("AI error:", err)
+  return
+}
+
+const data = await response.json()
 
     console.log("AI response:", data);
 
     setAiResult(data);
-  if (data.totalCalories && data.totalProtein) {
+  if (data.totals) {
   setEntries((prev) => [
     ...prev,
     {
       name: data.dishName || aiInput,
-      calories: Number(data.totalCalories),
-      protein: Number(data.totalProtein)
+      calories: Number(data.totals.calories),
+      protein: Number(data.totals.protein)
     }
-  ]);
-
-  setAiInput("");
+  ])
 }
   } catch (error) {
     console.error("AI request failed:", error);
@@ -188,6 +203,15 @@ return (
 <h1 className="text-3xl font-bold">
 Macro Dashboard
 </h1>
+<Card>
+  <CardHeader>
+    <CardTitle>Weekly Overview</CardTitle>
+  </CardHeader>
+
+  <CardContent>
+    <WeeklyStrip weekData={weekData} />
+  </CardContent>
+</Card>
 <Summary totalCalories={totalCalories}
 totalProtein={totalProtein}
 entries={entries}
