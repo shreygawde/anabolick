@@ -20,8 +20,18 @@ export default defineConfig({
       "/analyze-text": {
         target: "http://localhost:5000",
         changeOrigin: true
+      },
+
+      // ✅ ADD THESE 👇
+      "/summary": {
+        target: "http://localhost:5000",
+        changeOrigin: true
+      },
+
+      "/weekly": {
+        target: "http://localhost:5000",
+        changeOrigin: true
       }
     }
   }
-
 });

@@ -30,7 +30,8 @@ ${text}
     "https://api.openai.com/v1/responses",
     {
       model: "gpt-4.1-mini",
-      input: prompt
+      input: prompt,
+response_format: { type: "json_object" }
     },
     {
       headers: {
@@ -40,13 +41,21 @@ ${text}
     }
   );
 
-  const rawText = response.data?.output?.[0]?.content?.[0]?.text;
+  const rawText = response.data.output_text;
+
+console.log("RAW OPENAI TEXT:", rawText);
+
+if (!rawText) {
+  throw new Error("Empty response from OpenAI");
+}
 
   if (!rawText) {
     throw new Error("Empty response from OpenAI");
   }
-
-  return extractJSON(rawText);
+console.log("RAW TEXT BEFORE PARSE:", rawText);
+const parsed = JSON.parse(rawText);
+console.log("PARSED DIRECT:", parsed);
+return parsed;
 }
 
 module.exports = callOpenAI;

@@ -1,31 +1,22 @@
-import { useState,useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "react-router-dom";
-import Summary from "@/components/MacroTracker/summary.jsx"
-import AiMealAnalyzer from "@/components/MacroTracker/AiMealAnalyzer.jsx"
-import MealList from "@/components/MacroTracker/MealList.jsx"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
-import { Input } from "@/components/ui/input"
-import { Car } from "lucide-react";
-import WeeklyStrip from "@/components/MacroTracker/WeeklyStrip.jsx"
-//import MacroProgress from "@/components/MacroTracker/MacroProgress.jsx"
+
+import Summary from "@/components/MacroTracker/summary.jsx";
+import AiMealAnalyzer from "@/components/MacroTracker/AiMealAnalyzer.jsx";
+import MealList from "@/components/MacroTracker/MealList.jsx";
+import WeeklyStrip from "@/components/MacroTracker/WeeklyStrip.jsx";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Input } from "@/components/ui/input";
+
 export default function MacroTracker() {
-  const weekData = [
-  { day: "Mon", status: "under" },
-  { day: "Tue", status: "under" },
-  { day: "Wed", status: "near" },
-  { day: "Thu", status: "over" },
-  { day: "Fri", status: null },
-  { day: "Sat", status: null },
-  { day: "Sun", status: null },
-]
   const location = useLocation();
-/* -------------------- STATE -------------------- */
+
+  /* -------------------- STATE -------------------- */
   const [aiInput, setAiInput] = useState("");
-const [aiLoading, setAiLoading] = useState(false);
-const [aiResult, setAiResult] = useState(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiResult, setAiResult] = useState(null);
 
   const [targets, setTargets] = useState({
     calories: "",
@@ -33,257 +24,215 @@ const [aiResult, setAiResult] = useState(null);
   });
 
   const [entries, setEntries] = useState([]);
+  const [summary, setSummary] = useState(null);
+  const [weekData, setWeekData] = useState([]);
 
+  /* -------------------- INITIAL ENTRY -------------------- */
   const [entry, setEntry] = useState(() => {
-  if (location.state) {
-    return {
-      name: location.state.name || "",
-      calories: location.state.calories || "",
-      protein: location.state.protein || "",
-  }
-
-  return { name: "", calories: "", protein: ""};
-}});
-
-
-  const [editingIndex, setEditingIndex] = useState(null);
-  const [editDraft, setEditDraft] = useState({
-    name: "",
-    calories: "",
-    protein: "",
+    if (location.state) {
+      return {
+        name: location.state.name || "",
+        calories: location.state.calories || "",
+        protein: location.state.protein || "",
+      };
+    }
+    return { name: "", calories: "", protein: "" };
   });
-  
 
-
-  /* -------------------- LOAD FROM STORAGE -------------------- */
+  /* -------------------- FETCH SUMMARY -------------------- */
   useEffect(() => {
-    const savedTargets = localStorage.getItem("anabolick_targets");
-    const savedEntries = localStorage.getItem("anabolick_entries");
+    const fetchSummary = async () => {
+      try {
+        const res = await fetch("/summary");
+        const data = await res.json();
+        setSummary(data);
+      } catch (err) {
+        console.error("Summary fetch failed:", err);
+      }
+    };
 
-    if (savedTargets) setTargets(JSON.parse(savedTargets));
-    if (savedEntries) setEntries(JSON.parse(savedEntries));
-  }, []);
-
-  /* -------------------- SAVE TO STORAGE -------------------- */
-  useEffect(() => {
-    localStorage.setItem("anabolick_targets", JSON.stringify(targets));
-  }, [targets]);
-
-  useEffect(() => {
-    localStorage.setItem("anabolick_entries", JSON.stringify(entries));
+    fetchSummary();
   }, [entries]);
 
-  /* -------------------- DERIVED VALUES -------------------- */
-  const totalCalories = entries.reduce(
-    (sum, e) => sum + (e.calories || 0),
-    0
-  );
+  /* -------------------- FETCH WEEKLY -------------------- */
+  useEffect(() => {
+    const fetchWeekly = async () => {
+      try {
+        const res = await fetch("/weekly");
+        const data = await res.json();
+        setWeekData(data);
+      } catch (err) {
+        console.error("Weekly fetch failed:", err);
+      }
+    };
 
-  const totalProtein = entries.reduce(
-    (sum, e) => sum + (e.protein || 0),
-    0
-  );
+    fetchWeekly();
+  }, [entries]);
 
- const calorieTarget = Number(targets.calories) || 0;
-const proteinTarget = Number(targets.protein) || 0;
-
-const calorieProgress = calorieTarget
-  ? Math.min((totalCalories / calorieTarget) * 100, 100)
-  : 0;
-
-const proteinProgress = proteinTarget
-  ? Math.min((totalProtein / proteinTarget) * 100, 100)
-  : 0;
-  console.log(targets)
+  /* -------------------- SAVE TARGETS -------------------- */
+  const saveTargets = async (newTargets) => {
+    try {
+      await fetch("/user/targets", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(newTargets),
+      });
+    } catch (err) {
+      console.error("Saving targets failed:", err);
+    }
+  };
 
   /* -------------------- HANDLERS -------------------- */
-  const analyzeWithAI = async () => {
-  if (!aiInput.trim()) return;
-
-  try {
-    setAiLoading(true);
-    console.log("AI input:", aiInput);
-
-    const response = await fetch("/analyze-text", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ text: aiInput }),
-    });
-
-    if (!response.ok) {
-  const err = await response.json()
-  console.error("AI error:", err)
-  return
-}
-
-const data = await response.json()
-
-    console.log("AI response:", data);
-
-    setAiResult(data);
-  if (data.totals) {
-  setEntries((prev) => [
-    ...prev,
-    {
-      name: data.dishName || aiInput,
-      calories: Number(data.totals.calories),
-      protein: Number(data.totals.protein)
-    }
-  ])
-}
-  } catch (error) {
-    console.error("AI request failed:", error);
-  } finally {
-    setAiLoading(false);
-  }
-};
-
   const handleTargetChange = (e) => {
     const { name, value } = e.target;
-    setTargets((t) => ({ ...t, [name]: value }));
+
+    const updated = {
+      ...targets,
+      [name]: value,
+    };
+
+    setTargets(updated);
+    saveTargets(updated);
   };
 
-  const handleEntryChange = (e) => {
-    const { name, value } = e.target;
-    setEntry((prev) => ({ ...prev, [name]: value }));
-  };
+  const analyzeWithAI = async () => {
+    if (!aiInput.trim()) return;
 
-  const addEntry = () => {
-    if (!entry.name) return;
+    try {
+      setAiLoading(true);
 
-    setEntries((prev) => [
-      ...prev,
-      {
-        ...entry,
-        calories: Number(entry.calories),
-        protein: Number(entry.protein),
-      },
-    ]);
+      const response = await fetch("/analyze-text", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: aiInput }),
+      });
 
-    setEntry({ name: "", calories: "", protein: "" });
+      if (!response.ok) {
+        const err = await response.json();
+        console.error("AI error:", err);
+        return;
+      }
+
+      const data = await response.json();
+      setAiResult(data);
+
+      if (data.totals) {
+        setEntries((prev) => [
+          ...prev,
+          {
+            name: data.dishName || aiInput,
+            calories: Number(data.totals.calories),
+            protein: Number(data.totals.protein),
+          },
+        ]);
+      }
+    } catch (error) {
+      console.error("AI request failed:", error);
+    } finally {
+      setAiLoading(false);
+    }
   };
 
   const deleteEntry = (index) => {
     setEntries((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const startEdit = (index) => {
-    const e = entries[index];
-    setEditingIndex(index);
-    setEditDraft({
-      name: e.name,
-      calories: e.calories,
-      protein: e.protein,
-    });
-  };
-      const clearDay = () => {
-  setEntries([]);
-};
+  /* -------------------- UI -------------------- */
+  return (
+    <section className="px-6 py-20">
+      <div className="max-w-6xl mx-auto space-y-8">
 
-  const saveEdit = () => {
-    setEntries((prev) =>
-      prev.map((e, i) =>
-        i === editingIndex
-          ? {
-              ...editDraft,
-              calories: Number(editDraft.calories),
-              protein: Number(editDraft.protein),
-            }
-          : e
-      )
-    );
-    setEditingIndex(null);
-    setEditDraft({ name: "", calories: "", protein: "" });
-  };
-return (
-<section className="px-6 py-20">
-<div className="max-w-6xl mx-auto space-y-8">
-<h1 className="text-3xl font-bold">
-Macro Dashboard
-</h1>
-<Card>
-  <CardHeader>
-    <CardTitle>Weekly Overview</CardTitle>
-  </CardHeader>
+        <h1 className="text-3xl font-bold">Macro Dashboard</h1>
 
-  <CardContent>
-    <WeeklyStrip weekData={weekData} />
-  </CardContent>
-</Card>
-<Summary totalCalories={totalCalories}
-totalProtein={totalProtein}
-entries={entries}
-targets={targets}/>
-<Card>
-  <CardHeader>
-    <CardTitle>Daily Targets</CardTitle>
-  </CardHeader>
+        {/* WEEKLY */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Weekly Overview</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <WeeklyStrip weekData={weekData} />
+          </CardContent>
+        </Card>
 
-  <CardContent className="space-y-4">
+        {/* SUMMARY */}
+        <Summary
+          totalCalories={summary?.totals?.calories || 0}
+          totalProtein={summary?.totals?.protein || 0}
+          targets={summary?.targets || targets}
+        />
 
-    <div>
-      <p className="text-sm mb-1">Calories Target</p>
-      <Input
-        type="number"
-        name="calories"
-        value={targets.calories}
-        onChange={handleTargetChange}
-        placeholder="2000"
-        className="text-primary"
-      />
-    </div>
+        {/* TARGETS */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Daily Targets</CardTitle>
+          </CardHeader>
 
-    <div>
-      <p className="text-sm mb-1">Protein Target</p>
-      <Input
-        type="number"
-        name="protein"
-        value={targets.protein}
-        onChange={handleTargetChange}
-        placeholder="150"
-        className="text-primary"
-      />
-    </div>
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm mb-1">Calories Target</p>
+              <Input
+                type="number"
+                name="calories"
+                value={targets.calories}
+                onChange={handleTargetChange}
+                placeholder="2000"
+              />
+            </div>
 
-  </CardContent>
-</Card>
-<div className="grid md:grid-cols-2 gap-6">
-<AiMealAnalyzer
-  aiInput={aiInput}
-  setAiInput={setAiInput}
-  analyzeWithAI={analyzeWithAI}
-  aiLoading={aiLoading}
-  aiResult={aiResult}
-/>
-<MealList targets={targets}
-entries={entries}
-deleteEntry={deleteEntry}/>
-</div>
-<section>
-  <Card>
-<CardHeader>
-<CardTitle>Daily Progress</CardTitle>
-</CardHeader>
+            <div>
+              <p className="text-sm mb-1">Protein Target</p>
+              <Input
+                type="number"
+                name="protein"
+                value={targets.protein}
+                onChange={handleTargetChange}
+                placeholder="150"
+              />
+            </div>
+          </CardContent>
+        </Card>
 
-<CardContent className="space-y-4">
+        {/* AI + MEALS */}
+        <div className="grid md:grid-cols-2 gap-6">
+          <AiMealAnalyzer
+            aiInput={aiInput}
+            setAiInput={setAiInput}
+            analyzeWithAI={analyzeWithAI}
+            aiLoading={aiLoading}
+            aiResult={aiResult}
+          />
 
-<div>
-<p className="text-sm mb-1">Calories</p>
-<Progress value={calorieProgress} />
-</div>
+          <MealList
+            targets={targets}
+            entries={entries}
+            deleteEntry={deleteEntry}
+          />
+        </div>
 
-<div>
-<p className="text-sm mb-1">Protein</p>
-<Progress value={proteinProgress} />
-</div>
+        {/* PROGRESS */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Daily Progress</CardTitle>
+          </CardHeader>
 
-</CardContent>
-</Card>
-</section>
-</div>
-</section>
-);
+          <CardContent className="space-y-4">
+            <div>
+              <p className="text-sm mb-1">Calories</p>
+              <Progress value={summary?.progress?.calories || 0} />
+            </div>
+
+            <div>
+              <p className="text-sm mb-1">Protein</p>
+              <Progress value={summary?.progress?.protein || 0} />
+            </div>
+          </CardContent>
+        </Card>
+
+      </div>
+    </section>
+  );
 }
-

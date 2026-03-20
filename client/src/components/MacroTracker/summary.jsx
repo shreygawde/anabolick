@@ -34,7 +34,7 @@ export default function Summary({totalCalories,
 <CardTitle>Meals</CardTitle>
 </CardHeader>
 <CardContent>
-<p className="text-2xl font-bold">{entries.length}</p>
+<p className="text-2xl font-bold">{(entries || []).length}</p>
 </CardContent>
 </Card>
 
