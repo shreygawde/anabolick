@@ -15,7 +15,7 @@ async function chooseBestFood(ingredient, candidates) {
     })
     .join("\n");
 
-  const prompt = `
+const prompt = `
 You are selecting the best database match for a food ingredient.
 
 Ingredient: ${ingredient}
@@ -24,9 +24,11 @@ Options:
 ${options}
 
 Rules:
-- Choose the option that best represents the ingredient.
-- Prefer the most common and generic version of the food.
-- Avoid niche, diet-specific, or branded variants unless clearly implied.
+- The selected option MUST represent the FULL dish, not just a single ingredient.
+- If the ingredient is a combined dish (e.g. "fish biryani", "chicken pasta"), do NOT select a single component like "fish" or "rice".
+- Prefer options that match the complete prepared dish.
+- Prefer common, generic versions of the dish.
+- Avoid raw ingredients unless the input explicitly refers to them.
 - Return ONLY the option number.
 `;
 
