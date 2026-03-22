@@ -9,6 +9,7 @@ Extract food items from the input.
 - Only return multiple items if the input clearly contains separate foods(eg. eggs and bacon).
 - Each item must include name, amount, and unit (g or ml).
 - The amount should represent a realistic typical portion for that specific food.
+- dishName should be a short, natural name for the meal.
 Return ONLY valid json.
 
 {
