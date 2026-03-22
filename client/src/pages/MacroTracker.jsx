@@ -48,13 +48,19 @@ export default function MacroTracker() {
         const res = await fetch("/summary");
         const data = await res.json();
         setSummary(data);
+
+        // ✅ FIX: initialize targets ONCE from backend
+        if (data?.targets) {
+          setTargets(data.targets);
+        }
+
       } catch (err) {
         console.error("Summary fetch failed:", err);
       }
     };
 
     fetchSummary();
-  }, [entries]);
+  }, []); // ✅ FIX: remove [entries]
 
   /* -------------------- FETCH WEEKLY -------------------- */
   useEffect(() => {
@@ -154,6 +160,19 @@ export default function MacroTracker() {
     setEntries((prev) => prev.filter((_, i) => i !== index));
   };
 
+  /* -------------------- LOCAL CALCULATIONS (FIX) -------------------- */
+
+  const totalCalories = entries.reduce((sum, e) => sum + (e.calories || 0), 0);
+  const totalProtein = entries.reduce((sum, e) => sum + (e.protein || 0), 0);
+
+  const calorieProgress = targets.calories
+    ? Math.min((totalCalories / targets.calories) * 100, 100)
+    : 0;
+
+  const proteinProgress = targets.protein
+    ? Math.min((totalProtein / targets.protein) * 100, 100)
+    : 0;
+
   /* -------------------- UI -------------------- */
 
   return (
@@ -174,9 +193,9 @@ export default function MacroTracker() {
 
         {/* SUMMARY */}
         <Summary
-          totalCalories={summary?.totals?.calories || 0}
-          totalProtein={summary?.totals?.protein || 0}
-          targets={summary?.targets || targets}
+          totalCalories={totalCalories}   // ✅ FIX
+          totalProtein={totalProtein}     // ✅ FIX
+          targets={targets}
         />
 
         {/* TARGETS */}
@@ -218,7 +237,7 @@ export default function MacroTracker() {
             analyzeWithAI={analyzeWithAI}
             aiLoading={aiLoading}
             aiResult={aiResult}
-            addAiMeal={addAiMeal}   // ✅ NEW
+            addAiMeal={addAiMeal}
           />
 
           <MealList
@@ -237,12 +256,12 @@ export default function MacroTracker() {
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm mb-1">Calories</p>
-              <Progress value={summary?.progress?.calories || 0} />
+              <Progress value={calorieProgress} /> {/* ✅ FIX */}
             </div>
 
             <div>
               <p className="text-sm mb-1">Protein</p>
-              <Progress value={summary?.progress?.protein || 0} />
+              <Progress value={proteinProgress} /> {/* ✅ FIX */}
             </div>
           </CardContent>
         </Card>
