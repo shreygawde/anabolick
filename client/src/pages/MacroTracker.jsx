@@ -28,7 +28,7 @@ export default function MacroTracker() {
   const [weekData, setWeekData] = useState([]);
 
   /* -------------------- INITIAL ENTRY -------------------- */
-  const [entry, setEntry] = useState(() => {
+  const [entry] = useState(() => {
     if (location.state) {
       return {
         name: location.state.name || "",
@@ -42,40 +42,40 @@ export default function MacroTracker() {
   });
 
   /* -------------------- FETCH SUMMARY -------------------- */
-  useEffect(() => {
-    const fetchSummary = async () => {
-      try {
-        const res = await fetch("/summary");
-        const data = await res.json();
-        setSummary(data);
+  const fetchSummary = async () => {
+    try {
+      const res = await fetch("/summary");
+      const data = await res.json();
 
-        // ✅ FIX: initialize targets ONCE from backend
-        if (data?.targets) {
-          setTargets(data.targets);
-        }
+      setSummary(data);
 
-      } catch (err) {
-        console.error("Summary fetch failed:", err);
+      // initialize targets once
+      if (data?.targets) {
+        setTargets(data.targets);
       }
-    };
+    } catch (err) {
+      console.error("Summary fetch failed:", err);
+    }
+  };
 
+  useEffect(() => {
     fetchSummary();
-  }, []); // ✅ FIX: remove [entries]
+  }, []);
 
   /* -------------------- FETCH WEEKLY -------------------- */
-  useEffect(() => {
-    const fetchWeekly = async () => {
-      try {
-        const res = await fetch("/weekly");
-        const data = await res.json();
-        setWeekData(data);
-      } catch (err) {
-        console.error("Weekly fetch failed:", err);
-      }
-    };
+  const fetchWeekly = async () => {
+    try {
+      const res = await fetch("/weekly");
+      const data = await res.json();
+      setWeekData(data);
+    } catch (err) {
+      console.error("Weekly fetch failed:", err);
+    }
+  };
 
+  useEffect(() => {
     fetchWeekly();
-  }, [entries]);
+  }, []);
 
   /* -------------------- SAVE TARGETS -------------------- */
   const saveTargets = async (newTargets) => {
@@ -106,7 +106,7 @@ export default function MacroTracker() {
     saveTargets(updated);
   };
 
-  // 🔥 Analyze ONLY (no auto-add)
+  // 🔥 Analyze ONLY
   const analyzeWithAI = async () => {
     if (!aiInput.trim()) return;
 
@@ -129,7 +129,6 @@ export default function MacroTracker() {
       }
 
       setAiResult(data);
-
     } catch (error) {
       console.error("AI request failed:", error);
     } finally {
@@ -137,41 +136,43 @@ export default function MacroTracker() {
     }
   };
 
-  // 🔥 Confirm add
-  const addAiMeal = () => {
+  // 🔥 Add meal → then refresh backend
+  const addAiMeal = async () => {
     if (!aiResult?.totals) return;
 
-    setEntries((prev) => [
-      ...prev,
-      {
-        name: aiResult.dishName || aiInput,
-        calories: Number(aiResult.totals.calories),
-        protein: Number(aiResult.totals.protein),
-        carbs: Number(aiResult.totals.carbs),
-        fat: Number(aiResult.totals.fat),
-      },
-    ]);
+    try {
+      await fetch("/meals", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          name: aiResult.dishName || aiInput,
+          calories: aiResult.totals.calories,
+          protein: aiResult.totals.protein,
+          carbs: aiResult.totals.carbs,
+          fat: aiResult.totals.fat,
+        }),
+      });
 
-    setAiResult(null);
-    setAiInput("");
+      // 🔥 refresh from backend (source of truth)
+      await fetchSummary();
+      await fetchWeekly();
+
+      setAiResult(null);
+      setAiInput("");
+    } catch (err) {
+      console.error("Adding meal failed:", err);
+    }
   };
 
-  const deleteEntry = (index) => {
+  const deleteEntry = async (index) => {
+    // optional: hook this to backend delete later
     setEntries((prev) => prev.filter((_, i) => i !== index));
+
+    await fetchSummary();
+    await fetchWeekly();
   };
-
-  /* -------------------- LOCAL CALCULATIONS (FIX) -------------------- */
-
-  const totalCalories = entries.reduce((sum, e) => sum + (e.calories || 0), 0);
-  const totalProtein = entries.reduce((sum, e) => sum + (e.protein || 0), 0);
-
-  const calorieProgress = targets.calories
-    ? Math.min((totalCalories / targets.calories) * 100, 100)
-    : 0;
-
-  const proteinProgress = targets.protein
-    ? Math.min((totalProtein / targets.protein) * 100, 100)
-    : 0;
 
   /* -------------------- UI -------------------- */
 
@@ -191,10 +192,10 @@ export default function MacroTracker() {
           </CardContent>
         </Card>
 
-        {/* SUMMARY */}
+        {/* SUMMARY (FROM BACKEND ONLY) */}
         <Summary
-          totalCalories={totalCalories}   // ✅ FIX
-          totalProtein={totalProtein}     // ✅ FIX
+          totalCalories={summary?.totals?.calories || 0}
+          totalProtein={summary?.totals?.protein || 0}
           targets={targets}
         />
 
@@ -242,12 +243,12 @@ export default function MacroTracker() {
 
           <MealList
             targets={targets}
-            entries={entries}
+            entries={summary?.meals || []} // 🔥 from backend
             deleteEntry={deleteEntry}
           />
         </div>
 
-        {/* PROGRESS */}
+        {/* PROGRESS (FROM BACKEND ONLY) */}
         <Card>
           <CardHeader>
             <CardTitle>Daily Progress</CardTitle>
@@ -256,12 +257,12 @@ export default function MacroTracker() {
           <CardContent className="space-y-4">
             <div>
               <p className="text-sm mb-1">Calories</p>
-              <Progress value={calorieProgress} /> {/* ✅ FIX */}
+              <Progress value={summary?.progress?.calories || 0} />
             </div>
 
             <div>
               <p className="text-sm mb-1">Protein</p>
-              <Progress value={proteinProgress} /> {/* ✅ FIX */}
+              <Progress value={summary?.progress?.protein || 0} />
             </div>
           </CardContent>
         </Card>
