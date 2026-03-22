@@ -12,7 +12,7 @@ Rules:
 - Ignore minor ingredients (spices, salt, water).
 - Each ingredient must have: name, amount, unit (g or ml).
 - Amounts must be realistic.
-
+- Total portion should represent a realistic single serving unless specified otherwise.
 Return ONLY valid JSON:
 
 {
