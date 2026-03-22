@@ -8,7 +8,7 @@ Extract the main food ingredients from the meal description.
 
 Rules:
 - Always include a dishName (short, natural name).
-- Return only MAIN components(eg.chicken,rice)
+- Return only MAIN components(eg.chicken,rice,yoghurt,oil)
 - Ignore minor ingredients (spices, salt, water).
 - Each ingredient must have: name, amount, unit (g or ml).
 - Amounts must be realistic.
