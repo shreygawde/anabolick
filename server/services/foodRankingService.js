@@ -31,20 +31,25 @@ Rules:
 - Return ONLY the option number.
 `;
 
-  const response = await axios.post(
-    "https://api.openai.com/v1/responses",
-    {
-      model: "gpt-4.1-mini",
-      input: prompt
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      timeout: 10000
+ const response = await axios.post(
+  "https://api.openai.com/v1/responses",
+  {
+    model: "gpt-4.1-mini",
+    input: prompt,
+    text: {
+      format: {
+        type: "json_object"
+      }
     }
-  );
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      "Content-Type": "application/json"
+    },
+    timeout: 10000
+  }
+);
 
   const raw = response.data?.output?.[0]?.content?.[0]?.text;
 
@@ -55,9 +60,10 @@ Rules:
   const match = raw.match(/\d+/);
   const index = match ? parseInt(match[0], 10) : null;
 
-  if (!index || index < 1 || index > limitedCandidates.length) {
-    throw new Error("Invalid ranking response from AI");
-  }
+ if (!index || index < 1 || index > limitedCandidates.length) {
+  console.warn("AI ranking failed, defaulting to first candidate");
+  return limitedCandidates[0];
+}
 
   return limitedCandidates[index - 1];
 }

@@ -26,35 +26,32 @@ Meal:
 ${text}
 `;
 
-  const response = await axios.post(
-    "https://api.openai.com/v1/responses",
-    {
-      model: "gpt-4.1-mini",
-      input: prompt,
-response_format: { type: "json_object" }
-    },
-    {
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
+const response = await axios.post(
+  "https://api.openai.com/v1/responses",
+  {
+    model: "gpt-4.1-mini",
+    input: prompt,
+    text: {
+      format: {
+        type: "json_object"
       }
     }
-  );
+  },
+  {
+    headers: {
+      Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
+      "Content-Type": "application/json"
+    }
+  }
+);
 
-  const rawText = response.data.output_text;
-
-console.log("RAW OPENAI TEXT:", rawText);
+const rawText = response.data.output?.[0]?.content?.[0]?.text;
 
 if (!rawText) {
   throw new Error("Empty response from OpenAI");
 }
 
-  if (!rawText) {
-    throw new Error("Empty response from OpenAI");
-  }
-console.log("RAW TEXT BEFORE PARSE:", rawText);
 const parsed = JSON.parse(rawText);
-console.log("PARSED DIRECT:", parsed);
 return parsed;
 }
 
