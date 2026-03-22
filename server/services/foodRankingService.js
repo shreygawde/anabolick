@@ -1,22 +1,62 @@
 const axios = require("axios");
 
-function isGoodMatch(input, candidate) {
-  const a = input.toLowerCase();
-  const b = candidate.toLowerCase();
+// --- helpers ---
 
-  if (b.includes(a) || a.includes(b)) return true;
-
-  const aWords = a.split(" ");
-  const bWords = b.split(" ");
-
-  const overlap = aWords.filter(w => bWords.includes(w)).length;
-
-  return overlap >= Math.ceil(aWords.length / 2);
+function normalize(str) {
+  return str
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .trim();
 }
 
-async function chooseBestFood(ingredient, candidates) {
-  console.log("Ranking service OPENAI KEY:", process.env.OPENAI_API_KEY?.slice(0,10));
+function isGoodMatch(input, candidate) {
+  const a = normalize(input);
+  const b = normalize(candidate);
 
+  if (!a || !b) return false;
+
+  // exact or near-exact match
+  if (b.includes(a) || a.includes(b)) return true;
+
+  const aWords = a.split(/\s+/);
+  const bWords = b.split(/\s+/);
+
+  const overlap = aWords.filter(w => bWords.includes(w)).length;
+  const ratio = overlap / aWords.length;
+
+  return ratio >= 0.4;
+}
+
+function strongWordMatch(input, candidate) {
+  const a = normalize(input);
+  const b = normalize(candidate);
+
+  if (!a || !b) return false;
+
+  const words = a.split(/\s+/);
+
+  return words.every(w => b.includes(w));
+}
+
+function isClearlyTop(candidates) {
+  if (candidates.length < 2) return true;
+
+  const first = normalize(candidates[0].name || "");
+  const second = normalize(candidates[1].name || "");
+
+  if (!first || !second) return true;
+
+  const firstWords = first.split(/\s+/);
+  const secondWords = second.split(/\s+/);
+
+  const overlap = firstWords.filter(w => secondWords.includes(w)).length;
+
+  return overlap === 0;
+}
+
+// --- main function ---
+
+async function chooseBestFood(ingredient, candidates) {
   if (!candidates || candidates.length === 0) {
     throw new Error("No candidates provided for ranking");
   }
@@ -26,9 +66,32 @@ async function chooseBestFood(ingredient, candidates) {
 
   const top = limitedCandidates[0];
 
-  // 🚀 NEW: skip AI if good match
-  if (top && isGoodMatch(ingredient, top.name)) {
-    console.log(`Skipping AI for "${ingredient}" → using "${top.name}"`);
+  // defensive guard
+  if (!top || !top.name) {
+    return limitedCandidates[0];
+  }
+
+  // 🔥 1. Few candidates → skip AI
+  if (limitedCandidates.length <= 2) {
+    console.log(`Few candidates → skipping AI`);
+    return top;
+  }
+
+  // 🔥 2. Strong match → skip AI
+  if (strongWordMatch(ingredient, top.name)) {
+    console.log(`Strong word match → skipping AI`);
+    return top;
+  }
+
+  // 🔥 3. Good match → skip AI
+  if (isGoodMatch(ingredient, top.name)) {
+    console.log(`Good match → skipping AI`);
+    return top;
+  }
+
+  // 🔥 4. Clearly dominant → skip AI
+  if (isClearlyTop(limitedCandidates)) {
+    console.log(`Top candidate clearly dominant → skipping AI`);
     return top;
   }
 
@@ -81,7 +144,7 @@ Rules:
 
   if (!index || index < 1 || index > limitedCandidates.length) {
     console.warn("AI ranking failed, defaulting to first candidate");
-    return limitedCandidates[0];
+    return top;
   }
 
   return limitedCandidates[index - 1];
