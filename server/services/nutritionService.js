@@ -11,7 +11,7 @@ async function analyzeMeal(text) {
   if (!parsed.ingredients || parsed.ingredients.length === 0) {
     throw new Error("No food items detected");
   }
-if (parsed.ingredients.length > 12) {
+/*if (parsed.ingredients.length > 12) {
   throw new Error("Meal too complex");
 }
   /*
