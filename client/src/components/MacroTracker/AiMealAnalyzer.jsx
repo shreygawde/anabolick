@@ -7,45 +7,77 @@ export default function AiMealAnalyzer({
   setAiInput,
   analyzeWithAI,
   aiLoading,
-  aiResult
+  aiResult,
+  addAiMeal // ✅ NEW PROP
 }) {
 
-return (
+  return (
+    <Card>
 
-<Card>
+      <CardHeader>
+        <CardTitle>AI Meal Analyzer</CardTitle>
+      </CardHeader>
 
-<CardHeader>
-<CardTitle>AI Meal Analyzer</CardTitle>
-</CardHeader>
+      <CardContent className="space-y-4">
 
-<CardContent className="space-y-3">
+        {/* INPUT */}
+        <Textarea
+          value={aiInput}
+          onChange={(e) => setAiInput(e.target.value)}
+          placeholder="Describe your meal..."
+        />
 
-<Textarea
-value={aiInput}
-onChange={(e)=>setAiInput(e.target.value)}
-placeholder="Describe your meal..."
-/>
+        <Button onClick={analyzeWithAI} disabled={aiLoading}>
+          {aiLoading ? "Analyzing..." : "Analyze Meal"}
+        </Button>
 
-<Button onClick={analyzeWithAI} disabled={aiLoading}>
-{aiLoading ? "Analyzing..." : "Analyze Meal"}
-</Button>
+        {/* RESULT */}
+        {aiResult && (
+          <div className="p-4 border rounded-xl space-y-3">
 
-{aiResult && (
-<div className="p-3 border rounded-lg">
+            {/* DISH NAME */}
+            <p className="font-semibold text-lg">
+              {aiResult.dishName || "Unnamed Meal"}
+            </p>
 
-<p className="font-semibold">{aiResult.dishName}</p>
+            {/* TOTALS */}
+            <div className="text-sm text-muted-foreground">
+              <p>
+                {Math.round(aiResult.totals?.calories || 0)} kcal ·{" "}
+                {Math.round(aiResult.totals?.protein || 0)}g protein ·{" "}
+                {Math.round(aiResult.totals?.carbs || 0)}g carbs ·{" "}
+                {Math.round(aiResult.totals?.fat || 0)}g fat
+              </p>
+            </div>
 
-<p className="text-sm text-muted-foreground">
-{aiResult.totalCalories} kcal · {aiResult.totalProtein}g protein
-</p>
+            {/* INGREDIENTS */}
+            {aiResult.ingredients && (
+              <div className="text-sm border-t pt-2 space-y-1">
+                <p className="font-medium">Ingredients:</p>
 
-</div>
-)}
+                {aiResult.ingredients.map((ing, idx) => (
+                  <div key={idx} className="flex justify-between">
+                    <span>
+                      {ing.name} ({ing.amount}{ing.unit})
+                    </span>
+                    <span className="text-muted-foreground">
+                      {Math.round(ing.calories || 0)} kcal
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
 
-</CardContent>
+            {/* ACTION */}
+            <Button onClick={addAiMeal} className="w-full">
+              Add Meal
+            </Button>
 
-</Card>
+          </div>
+        )}
 
-)
+      </CardContent>
 
+    </Card>
+  )
 }

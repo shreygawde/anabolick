@@ -34,9 +34,11 @@ export default function MacroTracker() {
         name: location.state.name || "",
         calories: location.state.calories || "",
         protein: location.state.protein || "",
+        carbs: location.state.carbs || "",
+        fat: location.state.fat || "",
       };
     }
-    return { name: "", calories: "", protein: "" };
+    return { name: "", calories: "", protein: "", carbs: "", fat: "" };
   });
 
   /* -------------------- FETCH SUMMARY -------------------- */
@@ -85,6 +87,7 @@ export default function MacroTracker() {
   };
 
   /* -------------------- HANDLERS -------------------- */
+
   const handleTargetChange = (e) => {
     const { name, value } = e.target;
 
@@ -97,6 +100,7 @@ export default function MacroTracker() {
     saveTargets(updated);
   };
 
+  // 🔥 Analyze ONLY (no auto-add)
   const analyzeWithAI = async () => {
     if (!aiInput.trim()) return;
 
@@ -111,25 +115,15 @@ export default function MacroTracker() {
         body: JSON.stringify({ text: aiInput }),
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        const err = await response.json();
-        console.error("AI error:", err);
+        console.error("AI error:", data);
         return;
       }
 
-      const data = await response.json();
       setAiResult(data);
 
-      if (data.totals) {
-        setEntries((prev) => [
-          ...prev,
-          {
-            name: data.dishName || aiInput,
-            calories: Number(data.totals.calories),
-            protein: Number(data.totals.protein),
-          },
-        ]);
-      }
     } catch (error) {
       console.error("AI request failed:", error);
     } finally {
@@ -137,11 +131,31 @@ export default function MacroTracker() {
     }
   };
 
+  // 🔥 Confirm add
+  const addAiMeal = () => {
+    if (!aiResult?.totals) return;
+
+    setEntries((prev) => [
+      ...prev,
+      {
+        name: aiResult.dishName || aiInput,
+        calories: Number(aiResult.totals.calories),
+        protein: Number(aiResult.totals.protein),
+        carbs: Number(aiResult.totals.carbs),
+        fat: Number(aiResult.totals.fat),
+      },
+    ]);
+
+    setAiResult(null);
+    setAiInput("");
+  };
+
   const deleteEntry = (index) => {
     setEntries((prev) => prev.filter((_, i) => i !== index));
   };
 
   /* -------------------- UI -------------------- */
+
   return (
     <section className="px-6 py-20">
       <div className="max-w-6xl mx-auto space-y-8">
@@ -204,6 +218,7 @@ export default function MacroTracker() {
             analyzeWithAI={analyzeWithAI}
             aiLoading={aiLoading}
             aiResult={aiResult}
+            addAiMeal={addAiMeal}   // ✅ NEW
           />
 
           <MealList
