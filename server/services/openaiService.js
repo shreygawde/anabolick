@@ -13,7 +13,7 @@ Rules:
 - Each ingredient must have name, amount, and unit (g or ml).
 - Amount must be a realistic non-zero estimate.
 
-Return ONLY valid JSON:
+Return ONLY valid json. The output must be strictly in json format.
 
 {
   "dishName": "",
@@ -25,7 +25,7 @@ Return ONLY valid JSON:
 Meal:
 ${text}
 `;
-
+console.log("FINAL PROMPT SENT TO OPENAI:\n", prompt);
 const response = await axios.post(
   "https://api.openai.com/v1/responses",
   {

@@ -31,16 +31,11 @@ Rules:
 - Return ONLY the option number.
 `;
 
- const response = await axios.post(
+const response = await axios.post(
   "https://api.openai.com/v1/responses",
   {
     model: "gpt-4.1-mini",
-    input: prompt,
-    text: {
-      format: {
-        type: "json_object"
-      }
-    }
+    input: prompt
   },
   {
     headers: {
