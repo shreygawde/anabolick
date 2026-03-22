@@ -2,7 +2,6 @@ const axios = require("axios");
 const extractJSON = require("../utils/extractJSON");
 
 async function callOpenAI(text) {
-console.log("OPENAI_API_KEY:", process.env.OPENAI_API_KEY?.slice(0,8));
 const prompt = `
 Extract the main food ingredients from the meal description.
 
