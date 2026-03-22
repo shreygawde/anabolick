@@ -6,8 +6,8 @@ console.log("OPENAI_API_KEY:", process.env.OPENAI_API_KEY?.slice(0,8));
 const prompt = `
 Extract food items from the input.
 
-- If it is a single dish (e.g., "chicken biryani", "pizza"), return it as ONE item.
-- Only return multiple items if the input clearly contains separate foods (e.g., "eggs and toast").
+- If it is a single dish (e.g., "chicken biryani", "pizza"), return it as ONE item inside the ingredients array.
+- Only return multiple items if the input clearly contains separate foods.
 - Each item must include name, amount, and unit (g or ml).
 
 Return ONLY valid json.
