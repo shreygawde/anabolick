@@ -5,11 +5,10 @@ async function callOpenAI(text) {
 console.log("OPENAI_API_KEY:", process.env.OPENAI_API_KEY?.slice(0,8));
 const prompt = `
 Extract food items from the input.
-
 - If it is a single dish (e.g., "chicken biryani", "pizza"), return it as ONE item inside the ingredients array.
-- Only return multiple items if the input clearly contains separate foods.
+- Only return multiple items if the input clearly contains separate foods(eg. eggs and bacon).
 - Each item must include name, amount, and unit (g or ml).
-
+- The amount should represent a realistic typical portion for that specific food.
 Return ONLY valid json.
 
 {
