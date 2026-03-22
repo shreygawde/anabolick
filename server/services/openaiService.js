@@ -4,13 +4,16 @@ const extractJSON = require("../utils/extractJSON");
 async function callOpenAI(text) {
 console.log("OPENAI_API_KEY:", process.env.OPENAI_API_KEY?.slice(0,8));
 const prompt = `
-Extract food items from the input.
-- If it is a single dish (e.g., "chicken biryani", "pizza"), return it as ONE item inside the ingredients array.
-- Only return multiple items if the input clearly contains separate foods(eg. eggs and bacon).
-- Each item must include name, amount, and unit (g or ml).
-- The amount should represent a realistic typical portion for that specific food.
-- dishName should be a short, natural name for the meal.
-Return ONLY valid json.
+Extract the main food ingredients from the meal description.
+
+Rules:
+- Always include a dishName (short, natural name).
+- Return only MAIN components(eg.chicken,rice)
+- Ignore minor ingredients (spices, salt, water).
+- Each ingredient must have: name, amount, unit (g or ml).
+- Amounts must be realistic.
+
+Return ONLY valid JSON:
 
 {
   "dishName": "",
@@ -18,6 +21,7 @@ Return ONLY valid json.
     { "name": "food", "amount": 100, "unit": "g|ml" }
   ]
 }
+
 Meal:
 ${text}
 `;
