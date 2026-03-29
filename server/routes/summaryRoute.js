@@ -3,13 +3,27 @@ const router = express.Router();
 const supabase = require("../supabaseClient");
 
 const { getUser } = require("../services/userService");
+const today = new Date();
+
+const startOfDay = new Date(
+  today.getFullYear(),
+  today.getMonth(),
+  today.getDate()
+);
+
+const endOfDay = new Date(
+  today.getFullYear(),
+  today.getMonth(),
+  today.getDate() + 1
+);
 
 router.get("/", async (req, res) => {
   try {
-    const { data: meals } = await supabase
-      .from("meals")
-      .select("calories, protein");
-
+    const { data: meals, error } = await supabase
+  .from("meals")
+  .select("calories, protein, created_at")
+  .gte("created_at", startOfDay.toISOString())
+  .lt("created_at", endOfDay.toISOString());
     const user = await getUser();
 
     const totals = meals.reduce(

@@ -16,22 +16,23 @@ export default defineConfig({
   },
 
   server: {
-    proxy: {
-      "/analyze-text": {
-        target: "http://localhost:5000",
-        changeOrigin: true
-      },
-
-      // ✅ ADD THESE 👇
-      "/summary": {
-        target: "http://localhost:5000",
-        changeOrigin: true
-      },
-
-      "/weekly": {
-        target: "http://localhost:5000",
-        changeOrigin: true
-      }
+  proxy: {
+    "/analyze-text": {
+      target: "http://localhost:5000",
+      changeOrigin: true
+    },
+    "/summary": {
+      target: "http://localhost:5000",
+      changeOrigin: true
+    },
+    "/weekly": {
+      target: "http://localhost:5000",
+      changeOrigin: true
+    },
+    "/user": {
+      target: "http://localhost:5000",
+      changeOrigin: true
     }
   }
+}
 });

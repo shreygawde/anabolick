@@ -18,27 +18,13 @@ export default function MacroTracker() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState(null);
 
-  const [targets, setTargets] = useState({
-    calories: "",
-    protein: "",
-  });
-
-  const [entries, setEntries] = useState([]);
   const [summary, setSummary] = useState(null);
   const [weekData, setWeekData] = useState([]);
 
-  /* -------------------- INITIAL ENTRY -------------------- */
-  const [entry] = useState(() => {
-    if (location.state) {
-      return {
-        name: location.state.name || "",
-        calories: location.state.calories || "",
-        protein: location.state.protein || "",
-        carbs: location.state.carbs || "",
-        fat: location.state.fat || "",
-      };
-    }
-    return { name: "", calories: "", protein: "", carbs: "", fat: "" };
+  // 🔥 UI-only editable targets (NOT source of truth)
+  const [editableTargets, setEditableTargets] = useState({
+    calories: "",
+    protein: "",
   });
 
   /* -------------------- FETCH SUMMARY -------------------- */
@@ -49,9 +35,9 @@ export default function MacroTracker() {
 
       setSummary(data);
 
-      // initialize targets once
+      // sync editable inputs from backend
       if (data?.targets) {
-        setTargets(data.targets);
+        setEditableTargets(data.targets);
       }
     } catch (err) {
       console.error("Summary fetch failed:", err);
@@ -87,26 +73,27 @@ export default function MacroTracker() {
         },
         body: JSON.stringify(newTargets),
       });
+
+      // refresh backend truth
+      fetchSummary();
     } catch (err) {
       console.error("Saving targets failed:", err);
     }
   };
 
-  /* -------------------- HANDLERS -------------------- */
+  const handleTargetChange = async (e) => {
+  const { name, value } = e.target;
 
-  const handleTargetChange = (e) => {
-    const { name, value } = e.target;
-
-    const updated = {
-      ...targets,
-      [name]: value,
-    };
-
-    setTargets(updated);
-    saveTargets(updated);
+  const updated = {
+    ...editableTargets,
+    [name]: value,
   };
 
-  // 🔥 Analyze ONLY
+  setEditableTargets(updated); // smooth UX
+  await saveTargets(updated);  // backend truth
+};
+
+  /* -------------------- AI -------------------- */
   const analyzeWithAI = async () => {
     if (!aiInput.trim()) return;
 
@@ -136,7 +123,7 @@ export default function MacroTracker() {
     }
   };
 
-  // 🔥 Add meal → then refresh backend
+  /* -------------------- ADD MEAL -------------------- */
   const addAiMeal = async () => {
     if (!aiResult?.totals) return;
 
@@ -155,7 +142,7 @@ export default function MacroTracker() {
         }),
       });
 
-      // 🔥 refresh from backend (source of truth)
+      // 🔥 refresh everything
       await fetchSummary();
       await fetchWeekly();
 
@@ -166,12 +153,18 @@ export default function MacroTracker() {
     }
   };
 
-  const deleteEntry = async (index) => {
-    // optional: hook this to backend delete later
-    setEntries((prev) => prev.filter((_, i) => i !== index));
+  /* -------------------- DELETE MEAL -------------------- */
+  const deleteEntry = async (id) => {
+    try {
+      await fetch(`/meals/${id}`, {
+        method: "DELETE",
+      });
 
-    await fetchSummary();
-    await fetchWeekly();
+      await fetchSummary();
+      await fetchWeekly();
+    } catch (err) {
+      console.error("Delete failed:", err);
+    }
   };
 
   /* -------------------- UI -------------------- */
@@ -192,12 +185,14 @@ export default function MacroTracker() {
           </CardContent>
         </Card>
 
-        {/* SUMMARY (FROM BACKEND ONLY) */}
-        <Summary
-          totalCalories={summary?.totals?.calories || 0}
-          totalProtein={summary?.totals?.protein || 0}
-          targets={targets}
-        />
+        {/* SUMMARY */}
+        {summary && (
+  <Summary
+    totalCalories={summary.totals.calories}
+    totalProtein={summary.totals.protein}
+    targets={summary.targets}
+  />
+)}
 
         {/* TARGETS */}
         <Card>
@@ -211,7 +206,7 @@ export default function MacroTracker() {
               <Input
                 type="number"
                 name="calories"
-                value={targets.calories}
+                value={editableTargets.calories}
                 onChange={handleTargetChange}
                 placeholder="2000"
               />
@@ -222,7 +217,7 @@ export default function MacroTracker() {
               <Input
                 type="number"
                 name="protein"
-                value={targets.protein}
+                value={editableTargets.protein}
                 onChange={handleTargetChange}
                 placeholder="150"
               />
@@ -242,13 +237,13 @@ export default function MacroTracker() {
           />
 
           <MealList
-            targets={targets}
-            entries={summary?.meals || []} // 🔥 from backend
+            targets={summary?.targets}
+            entries={summary?.meals || []}
             deleteEntry={deleteEntry}
           />
         </div>
 
-        {/* PROGRESS (FROM BACKEND ONLY) */}
+        {/* PROGRESS */}
         <Card>
           <CardHeader>
             <CardTitle>Daily Progress</CardTitle>
