@@ -1,8 +1,8 @@
-const supabase = require("../supabaseClient")
-const callOpenAI = require("./openaiService");
+const supabase = require("../../supabaseClient")
+const callOpenAI = require("../openaiService");
 const { searchFood, getFoodDetails } = require("./fatsecretService");
-const chooseBestFood = require("./foodRankingService");
-const { normalizeNutrition, calculateTotals } = require("../utils/nutritionMath");
+const chooseBestFood = require("../ai/foodRankingService");
+const { normalizeNutrition, calculateTotals } = require("../../utils/nutritionMath");
 
 async function analyzeMeal(text) {
 
@@ -11,7 +11,7 @@ async function analyzeMeal(text) {
   if (!parsed.ingredients || parsed.ingredients.length === 0) {
     throw new Error("No food items detected");
   }
-/*if (parsed.ingredients.length > 12) {
+if (parsed.ingredients.length > 12) {
   throw new Error("Meal too complex");
 }
   /*
@@ -92,6 +92,7 @@ async function analyzeMeal(text) {
   }).filter(Boolean);
 
   const totals = calculateTotals(ingredients);
+  
   await supabase
   .from("meals")
   .insert({
