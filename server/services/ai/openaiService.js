@@ -1,5 +1,5 @@
 const axios = require("axios");
-const extractJSON = require("../utils/extractJSON");
+const extractJSON = require("../../utils/extractJSON");
 
 async function callOpenAI(text) {
 const prompt = `

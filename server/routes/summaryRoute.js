@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const supabase = require("../supabaseClient");
 
-const { getUser } = require("../services/userService");
+const { getUser } = require("../services/db/userService");
 const today = new Date();
 
 const startOfDay = new Date(

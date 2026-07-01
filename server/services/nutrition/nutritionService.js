@@ -1,5 +1,5 @@
 const supabase = require("../../supabaseClient")
-const callOpenAI = require("../openaiService");
+const callOpenAI = require("../ai/openaiService");
 const { searchFood, getFoodDetails } = require("./fatsecretService");
 const chooseBestFood = require("../ai/foodRankingService");
 const { normalizeNutrition, calculateTotals } = require("../../utils/nutritionMath");
